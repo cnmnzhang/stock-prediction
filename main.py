@@ -7,19 +7,37 @@ from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
 
-START = "2015-01-01"
-TODAY = date.today().strftime("%Y-%m-%d")
 
-st.title('Stock Forecast App')
+# st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
+# with open('style.css') as f:
+#     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    
+st.sidebar.title('Stock Forecast App')
+st.sidebar.header('Dashboard `version 1`')
+
+st.sidebar.subheader('Stock parameter')
 stocks = ('GOOG', 'AAPL', 'MSFT', 'GME')
-selected_stock = st.selectbox('Select dataset for prediction', stocks)
+selected_stock = st.sidebar.selectbox('Select dataset for prediction', stocks)
 
-n_years = st.slider('Years of prediction:', 1, 4)
+# START = "2015-01-01"
+START = st.sidebar.date_input('Input Start Date', value=date(2015, 1, 1), min_value=date(2015, 1, 1), max_value=date(2022, 1, 1), key='start_date')
+TODAY = st.sidebar.date_input('Input End Date', value=date.today(), min_value=date(2015, 1, 1), max_value=date.today(), key='end_date')
+START = START.strftime("%Y-%m-%d")
+TODAY = TODAY.strftime("%Y-%m-%d")
+
+
+st.sidebar.subheader('Stock Prediction parameter')
+n_years = st.sidebar.slider('Years of prediction:', 1, 4)
 period = n_years * 365
 
+st.sidebar.markdown('''
+---
+Created with ❤️ by [Data Professor](https://youtube.com/dataprofessor/).
+''')
+
 ## cache the data
-@st.cache
+@st.cache_data(ttl=3600, show_spinner="........")
 def load_data(ticker):
     data = yf.download(ticker, START, TODAY)
     data.reset_index(inplace=True)
@@ -29,6 +47,10 @@ def load_data(ticker):
 data_load_state = st.text('Loading data...')
 data = load_data(selected_stock)
 data_load_state.text('Loading data... done!')
+
+
+
+
 
 st.subheader('Raw data')
 st.write(data.tail())
