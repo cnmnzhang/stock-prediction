@@ -79,10 +79,14 @@ st.markdown('# Train for all item-store combinations')
 train['ds'] = train['date']
 train['y'] = train['sales']
 
+mse_all = []
+
 
 # Forecast for All Store-Item Combinations
 @st.cache_data(ttl=3600, show_spinner="........")
-def forecast_store_item(history):
+def forecast_store_item(history1):
+    # use last 90 rows for comparison
+    history = history1[:-90]
     history = history.dropna()
     model = Prophet(
         interval_width=0.95,
@@ -105,14 +109,43 @@ def forecast_store_item(history):
     results_pd['store'] = history['store'].iloc[0]
     results_pd['item'] = history['item'].iloc[0]
 
+    # # view historic vs predicted values
+    # fig1 = plot_plotly(model, forecast)
+    # st.plotly_chart(fig1)
+
+    # # view forecast components
+    # fig2 = model.plot_components(forecast)
+
+    # mse of the last 90 days 
+    mse = mean_squared_error(history1['y'][-90:], results_pd['yhat'][-90:])
+    mse_all.append(mse)
+    # st.write('Mean Squared Error: {}'.format(mse))
+
     return results_pd[['ds', 'store', 'item', 'y', 'yhat', 'yhat_upper', 'yhat_lower']]
 
 # Apply Forecast Function to Each Store-Item Combination
-# results = train.groupby(['store', 'item']).apply(forecast_store_item).reset_index(drop=True)
+results = train.groupby(['item']).apply(forecast_store_item).reset_index(drop=True)
+
+item_best = mse_all.index(min(mse_all))
+
+st.write('item with best mse: {}'.format(item_best))
+st.write('best mse: {}'.format(min(mse_all)))
+
+# view forecast results of best item
+results_best = results[results['item'] == item_best]
+# plot best forecast 
+results_best_forecast = results_best[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+# df = pd.merge(train, results_best_forecast, on='ds', how='right')
+results_best_forecast.set_index('ds').plot(figsize=(16,8), color=['royalblue', "#34495e", "#e74c3c", "#e74c3c"], grid=True);
 
 
 # # Persist Forecast Output
-# results.to_csv('forecasts.csv', index=False)
+# results.to_csv('./data/forecasts.csv', index=False)
 
 
 # st.write(results.head())
+
+# results = pd.read_csv(r'./data/forecasts.csv', parse_dates=['ds'])
+
+
+

@@ -65,8 +65,8 @@ with col1:
 	plot_raw_data()
 
 # Predict forecast with Prophet.
-df_train = data[['Date','Close']]
-df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+stock_price = data[['Date','Close']]
+stock_price = stock_price.rename(columns={"Date": "ds", "Close": "y"})
 
 # instantiate the model and set parameters
 m = Prophet(
@@ -77,10 +77,14 @@ m = Prophet(
     yearly_seasonality=True,
     seasonality_mode='multiplicative'
 )
-m.fit(df_train)
+m.fit(stock_price)
 future = m.make_future_dataframe(periods=period, 
     freq='d', 
     include_history=False)
+
+future_boolean = future['ds'].map(lambda x : True if x.weekday() in range(0, 5) else False)
+future = future[future_boolean] 
+
 forecast = m.predict(future)
 
 with col2:
