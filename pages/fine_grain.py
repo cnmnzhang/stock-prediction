@@ -5,6 +5,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from math import sqrt
 from datetime import date
 from prophet.plot import plot_plotly
+import matplotlib.pyplot as plt
 from plotly import graph_objs as go
 from collections import Counter
 import os
@@ -116,15 +117,23 @@ def forecast_store_item(history1):
     # # view forecast components
     # fig2 = model.plot_components(forecast)
 
-    # mse of the last 90 days 
-    mse = mean_squared_error(history1['y'][-90:], results_pd['yhat'][-90:])
-    mse_all.append(mse)
     # st.write('Mean Squared Error: {}'.format(mse))
 
     return results_pd[['ds', 'store', 'item', 'y', 'yhat', 'yhat_upper', 'yhat_lower']]
 
 # Apply Forecast Function to Each Store-Item Combination
-results = train.groupby(['item']).apply(forecast_store_item).reset_index(drop=True)
+if os.path.exists('./data/fine_grain_results.csv'):
+    results = pd.read_csv('./data/fine_grain_results.csv')
+else:
+    results = train.groupby(['item']).apply(forecast_store_item).reset_index(drop=True)
+    results.to_csv('./data/fine_grain_results.csv', index=False)
+
+# calculate mse for each item using the last 90 days of data
+mse_all = []
+for item in results['item'].unique():
+    item_results = results[results['item'] == item].sort_values(by='ds')[:-90]
+    mse = mean_squared_error(item_results['y'], item_results['yhat'])
+    mse_all.append(mse)
 
 item_best = mse_all.index(min(mse_all))
 
@@ -136,16 +145,9 @@ results_best = results[results['item'] == item_best]
 # plot best forecast 
 results_best_forecast = results_best[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 # df = pd.merge(train, results_best_forecast, on='ds', how='right')
+
+# plot
+st.write('Best forecast')
+plt.figure(figsize=(16,8))
 results_best_forecast.set_index('ds').plot(figsize=(16,8), color=['royalblue', "#34495e", "#e74c3c", "#e74c3c"], grid=True);
-
-
-# # Persist Forecast Output
-# results.to_csv('./data/forecasts.csv', index=False)
-
-
-# st.write(results.head())
-
-# results = pd.read_csv(r'./data/forecasts.csv', parse_dates=['ds'])
-
-
-
+st.pyplot(plt)
