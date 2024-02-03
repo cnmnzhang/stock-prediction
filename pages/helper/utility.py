@@ -1,6 +1,15 @@
 import numpy as np
 import plotly.graph_objects as go
 from scipy.special import erfc
+import yfinance as yf
+import streamlit as st
+
+## cache the data
+@st.cache_data(ttl=3600, show_spinner="........")
+def load_data(ticker, START, TODAY):
+    data = yf.download(ticker, START, TODAY)
+    data.reset_index(inplace=True)
+    return data
 
 z = np.linspace(-8,8,200)
 
