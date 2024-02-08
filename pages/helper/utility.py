@@ -4,6 +4,33 @@ from scipy.special import erfc
 import yfinance as yf
 import streamlit as st
 
+def add_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url(https://assets.stickpng.com/thumbs/5a5a8b8614d8c4188e0b08e6.png);
+                background-repeat: no-repeat;
+                background-size: 80%;
+                height: auto;
+                padding-bottom: 120px;
+                padding-top: 120px;
+                background-position: 20px 20px;
+            }
+            [data-testid="stSidebarNav"]::before {
+                content: "Projects";
+                margin-left: 20px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                font-size: 30px;
+                position: relative;
+                top: 100px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 ## cache the data
 @st.cache_data(ttl=3600, show_spinner="........")
 def load_data(ticker, START, TODAY):

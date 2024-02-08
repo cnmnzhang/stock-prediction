@@ -7,6 +7,9 @@ from plotly import graph_objs as go
 import matplotlib.animation as animation
 import streamlit.components.v1 as components
 import os
+from pages.helper.utility import add_logo
+add_logo()
+
 
 st.title('Bifurcation Diagram of a Chaotic Dynamical System')
 

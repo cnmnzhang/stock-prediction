@@ -20,6 +20,10 @@ import toml
 # save xgb model
 import joblib
 
+from pages.helper.utility import add_logo
+add_logo()
+
+
 # Time series decomposition
 # !pip install stldecompose
 # from stldecompose import decompose
@@ -54,10 +58,10 @@ st.title('Using XGBoost for Prediction')
 st.write('Training XGBRegressor to predict future prices of stocks using technical indicator as features.')
 
 
-st.sidebar.title("Data")
+st.header("1. Data")
 
 # Load data
-with st.sidebar.expander("Dataset", expanded=False):
+with st.expander("Dataset", expanded=False):
     # st.button('Refresh Data', help=readme["tooltips"]["refresh_data"])
     dataset_name = st.selectbox(
             "Select a toy dataset",
@@ -70,20 +74,6 @@ else:
     data = load_data(dataset_name, '2013-01-01', '2023-12-31')
     data.to_csv(r'./data/train-'+ dataset_name + '.csv', index=False)  
     
-    
-
-st.sidebar.title("Data Preparation")
-# select option for data date granularity of monthly, weekly, daily, 
-with st.sidebar.expander("Date Granularity", expanded=False):
-    granularity = st.sidebar.selectbox('Select data granularity', ('Daily', 'Weekly', 'Monthly'), key='granularity')
-    # Convert 'Date' column to categorical based on selected granularity
-    if granularity == 'Monthly':
-        data['DateCategory'] = data['Date'].dt.to_period('M').astype('category')
-    elif granularity == 'Weekly':
-        data['DateCategory'] = data['Date'].dt.to_period('W').astype('category')
-    else:  # Daily
-        data['DateCategory'] = data['Date'].dt.date.astype('category')
-
 st.header('2. Feature Engineering')
 with st.expander('Moving Averages', expanded=False):
     st.markdown(
@@ -94,20 +84,20 @@ with st.expander('Moving Averages', expanded=False):
         * *Exponential Moving Average (EMA)* - an average where greater weights are applied to recent prices.
     """
     )
-data['EMA_9'] = data['Close'].ewm(9).mean().shift()
-data['SMA_5'] = data['Close'].rolling(5).mean().shift()
-data['SMA_10'] = data['Close'].rolling(10).mean().shift()
-data['SMA_15'] = data['Close'].rolling(15).mean().shift()
-data['SMA_30'] = data['Close'].rolling(30).mean().shift()
+    data['EMA_9'] = data['Close'].ewm(9).mean().shift()
+    data['SMA_5'] = data['Close'].rolling(5).mean().shift()
+    data['SMA_10'] = data['Close'].rolling(10).mean().shift()
+    data['SMA_15'] = data['Close'].rolling(15).mean().shift()
+    data['SMA_30'] = data['Close'].rolling(30).mean().shift()
 
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=data.Date, y=data.EMA_9, name='EMA 9'))
-fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_5, name='SMA 5'))
-fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_10, name='SMA 10'))
-fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_15, name='SMA 15'))
-fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_30, name='SMA 30'))
-fig.add_trace(go.Scatter(x=data.Date, y=data.Close, name='Close', opacity=0.2))
-st.plotly_chart(fig)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data.Date, y=data.EMA_9, name='EMA 9'))
+    fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_5, name='SMA 5'))
+    fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_10, name='SMA 10'))
+    fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_15, name='SMA 15'))
+    fig.add_trace(go.Scatter(x=data.Date, y=data.SMA_30, name='SMA 30'))
+    fig.add_trace(go.Scatter(x=data.Date, y=data.Close, name='Close', opacity=0.2))
+    st.plotly_chart(fig)
 
 # st.subheader('Bollinger Bands')
 # st.write("I'm calculating Bollinger Bands to be used as features: $BB_{up}$, $BB_{down}$ and $BB_{width}$.")
@@ -131,26 +121,26 @@ with st.expander('Relative Strength Index', expanded=False):
     Typically RSI value of 70 and above signal that a stock is becoming overbought/overvalued, meanwhile value of 30 and less can mean that it is oversold. Full range of RSI is from 0 to 100."""
     )
 
-def relative_strength_idx(data, n=14):
-    close = data['Close']
-    delta = close.diff()
-    delta = delta[1:]
-    pricesUp = delta.copy()
-    pricesDown = delta.copy()
-    pricesUp[pricesUp < 0] = 0
-    pricesDown[pricesDown > 0] = 0
-    rollUp = pricesUp.rolling(n).mean()
-    rollDown = pricesDown.abs().rolling(n).mean()
-    rs = rollUp / rollDown
-    rsi = 100.0 - (100.0 / (1.0 + rs))
-    return rsi
+    def relative_strength_idx(data, n=14):
+        close = data['Close']
+        delta = close.diff()
+        delta = delta[1:]
+        pricesUp = delta.copy()
+        pricesDown = delta.copy()
+        pricesUp[pricesUp < 0] = 0
+        pricesDown[pricesDown > 0] = 0
+        rollUp = pricesUp.rolling(n).mean()
+        rollDown = pricesDown.abs().rolling(n).mean()
+        rs = rollUp / rollDown
+        rsi = 100.0 - (100.0 / (1.0 + rs))
+        return rsi
 
-data['RSI'] = relative_strength_idx(data).fillna(0)
+    data['RSI'] = relative_strength_idx(data).fillna(0)
 
-fig = go.Figure(go.Scatter(x=data.Date, y=data.RSI, name='RSI'))
-st.plotly_chart(fig)
+    fig = go.Figure(go.Scatter(x=data.Date, y=data.RSI, name='RSI'))
+    st.plotly_chart(fig)
 
-with st.expander('oving Average Convergence Divergence', expanded=False):
+with st.expander('Moving Average Convergence Divergence', expanded=False):
     st.markdown(
     """
     I'll add MACD indicator which serves as a signal to buy or sell.
@@ -159,43 +149,50 @@ with st.expander('oving Average Convergence Divergence', expanded=False):
     """
     )
 
-EMA_12 = pd.Series(data['Close'].ewm(span=12, min_periods=12).mean())
-EMA_26 = pd.Series(data['Close'].ewm(span=26, min_periods=26).mean())
-data['MACD'] = pd.Series(EMA_12 - EMA_26)
-data['MACD_signal'] = pd.Series(data.MACD.ewm(span=9, min_periods=9).mean())
+    EMA_12 = pd.Series(data['Close'].ewm(span=12, min_periods=12).mean())
+    EMA_26 = pd.Series(data['Close'].ewm(span=26, min_periods=26).mean())
+    data['MACD'] = pd.Series(EMA_12 - EMA_26)
+    data['MACD_signal'] = pd.Series(data.MACD.ewm(span=9, min_periods=9).mean())
 
-fig = make_subplots(rows=2, cols=1)
-fig.add_trace(go.Scatter(x=data.Date, y=data.Close, name='Close'), row=1, col=1)
-fig.add_trace(go.Scatter(x=data.Date, y=EMA_12, name='EMA 12'), row=1, col=1)
-fig.add_trace(go.Scatter(x=data.Date, y=EMA_26, name='EMA 26'), row=1, col=1)
-fig.add_trace(go.Scatter(x=data.Date, y=data['MACD'], name='MACD'), row=2, col=1)
-fig.add_trace(go.Scatter(x=data.Date, y=data['MACD_signal'], name='Signal line'), row=2, col=1)
-st.plotly_chart(fig)
+    fig = make_subplots(rows=2, cols=1)
+    fig.add_trace(go.Scatter(x=data.Date, y=data.Close, name='Close'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=data.Date, y=EMA_12, name='EMA 12'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=data.Date, y=EMA_26, name='EMA 26'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=data.Date, y=data['MACD'], name='MACD'), row=2, col=1)
+    fig.add_trace(go.Scatter(x=data.Date, y=data['MACD_signal'], name='Signal line'), row=2, col=1)
+    st.plotly_chart(fig)
 
-st.subheader('Data Preparation Last Steps')
+st.header("3. Data Preparation")
+with st.expander("Initial Steps", expanded=True):
+    '''
+    ### Shift label column
+    Because I want to predict the next day price, after calculating all features for day $D_{i}$, I shift Close price column by -1 rows. 
+    After doing that, for day $D_{i}$ we have features from the same timestamp e.g. $RSI_{i}$, but the price $C_{i+1}$ from upcoming day.
 
-'''
-### Shift label column
-Because I want to predict the next day price, after calculating all features for day $D_{i}$, I shift Close price column by -1 rows. 
-After doing that, for day $D_{i}$ we have features from the same timestamp e.g. $RSI_{i}$, but the price $C_{i+1}$ from upcoming day.
+    ### Drop invalid samples
+    Because of calculating moving averages and shifting label column, few rows will have invalid values i.e. we haven't calculated $SMA_{10}$ for the first 10 days. 
+    Moreover, after shifting Close price column, last row price is equal to 0 which is not true. 
+    I remove these samples
+    '''
+    data['Close'] = data['Close'].shift(-1)
+    data = data.iloc[33:] # Because of moving averages and MACD line
+    data = data[:-1]      # Because of shifting close price
+    data.index = range(len(data))
 
-### Drop invalid samples
-Because of calculating moving averages and shifting label column, few rows will have invalid values i.e. we haven't calculated $SMA_{10}$ for the first 10 days. 
-Moreover, after shifting Close price column, last row price is equal to 0 which is not true. 
-I remove these samples
+# select option for data date granularity of monthly, weekly, daily, 
+with st.expander("Date Granularity", expanded=True):
+    granularity = st.selectbox('Select data granularity', ('Daily', 'Weekly', 'Monthly'), key='granularity')
+    # Convert 'Date' column to categorical based on selected granularity
+    if granularity == 'Monthly':
+        data['DateCategory'] = data['Date'].dt.to_period('M').astype('category')
+    elif granularity == 'Weekly':
+        data['DateCategory'] = data['Date'].dt.to_period('W').astype('category')
+    else:  # Daily
+        data['DateCategory'] = data['Date'].dt.date.astype('category')
 
-### Data Split
-I split stock data frame into three subsets. Default values: training ($70\%$), validation ($15\%$) and test ($15\%$) sets. 
-All three frames have been ploted in the chart below.
-'''
-data['Close'] = data['Close'].shift(-1)
-data = data.iloc[33:] # Because of moving averages and MACD line
-data = data[:-1]      # Because of shifting close price
-data.index = range(len(data))
-
-with st.sidebar.expander("Train/Valid/Test Split", expanded=True):
-    test_size = st.sidebar.slider('Test size', 0.05, 0.4, 0.15, 0.05)
-    valid_size = st.sidebar.slider('Validation size', 0.05, 0.4, 0.15, 0.05)
+with st.expander("Train/Valid/Test Split", expanded=True):
+    test_size = st.slider('Test size', 0.05, 0.4, 0.15, 0.05)
+    valid_size = st.slider('Validation size', 0.05, 0.4, 0.15, 0.05)
 
 
 test_split_idx  = int(data.shape[0] * (1-test_size))
@@ -211,9 +208,20 @@ fig.add_trace(go.Scatter(x=valid_data.Date, y=valid_data.Close, name='Validation
 fig.add_trace(go.Scatter(x=test_data.Date,  y=test_data.Close,  name='Test'))
 st.plotly_chart(fig)
 
-st.header('3. Train')
+st.header('3. Train and Finetuning with Grid Search')
 
 features = ['EMA_9', 'SMA_5', 'SMA_10', 'SMA_15', 'SMA_30', 'RSI', 'MACD', 'MACD_signal']
+
+parameters = {
+        'n_estimators': [100, 200, 300, 400],
+        'learning_rate': [0.001, 0.005, 0.01, 0.05],
+        'max_depth': [8, 10, 12, 15],
+        'gamma': [0.001, 0.005, 0.01, 0.02],
+    }
+with st.expander("Grid Search Parameters", expanded=False):
+    for key in parameters.keys():
+            parameters[key] = st.multiselect(key, parameters[key], default=parameters[key])
+    parameters['random_state'] = [st.slider('random_state', 0, 100, 42, 1)]
 
 
 # define data
@@ -226,18 +234,6 @@ X_valid = valid_data[features].copy()
 y_test  = test_data['Close'].copy()
 X_test  = test_data[features].copy()
 
-# side bar multiselect for parameters with expander for each key
-st.sidebar.title('Finetuning')
-parameters = {
-        'n_estimators': [100, 200, 300, 400],
-        'learning_rate': [0.001, 0.005, 0.01, 0.05],
-        'max_depth': [8, 10, 12, 15],
-        'gamma': [0.001, 0.005, 0.01, 0.02],
-    }
-with st.sidebar.expander("Grid Search Parameters", expanded=False):
-    for key in parameters.keys():
-            parameters[key] = st.sidebar.multiselect(key, parameters[key], default=parameters[key])
-parameters['random_state'] = [st.sidebar.slider('random_state', 0, 100, 42, 1)]
 
 eval_set = [(X_train, y_train), (X_valid, y_valid)]
 
@@ -255,7 +251,7 @@ else:
     # st.write(X_train.dtypes)
     clf.fit(X_train, y_train, verbose=False, eval_set=eval_set)
     
-    training_status.test(f'Training model...Done !!!')
+    training_status.text(f'Training model...Done !!!')
     st.write(f'Best params: {clf.best_params_}')
     st.write(f'Best validation score = {clf.best_score_}')
 

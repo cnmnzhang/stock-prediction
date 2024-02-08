@@ -4,6 +4,9 @@ import altair as alt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from pages.helper.utility import add_logo
+add_logo()
+
 
 # st.markdown('''To do:
 # * Batch size

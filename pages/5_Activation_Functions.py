@@ -3,6 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 from pages.helper.utility import derivative, logistic, relu, elu, selu_alpha, selu_scale, selu, plot_function, plot_function_derivative
+from pages.helper.utility import add_logo
 
 ########################################
 # Utility Code
@@ -11,6 +12,8 @@ z = np.linspace(-8,8,200)
 
 
 st.title('Activation Functions')
+
+add_logo()
 
 activation_function = st.selectbox('Choose an activation function', ['None', 'Logistic (Sigmoid) Function', 'Hyperbolic Tangent (Tanh) Function', 'ReLU Function', 'LeakyReLU Function', 'Variants of LeakyReLU Function', 'Exponential Linear Unit Function', 'SELU Function'])
 

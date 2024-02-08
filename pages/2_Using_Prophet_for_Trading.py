@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from functools import reduce
 import os
+from pages.helper.utility import add_logo
+add_logo()
+
 
 ## cache the data
 @st.cache_data(ttl=3600, show_spinner="........")
@@ -37,7 +40,7 @@ else:
     data.to_csv(r'./data/GOOG.csv', index=False)  
     
 
-st.title('2. Prophet')
+st.title('1. Prophet')
 st.write(f"""
          We saw in part 1 that Prophet is easy to use and is highly parameterizable! But how would we use it in practice and how well does it perform?
          From the wide y hat range of future predictions in the plot below, we need to use it in a clever way. 
@@ -72,7 +75,7 @@ df.set_index('ds').plot(figsize=(16,8), color=['royalblue', "#34495e", "#e74c3c"
 st.pyplot(fig1)
 
 
-st. title('3. Using Prophet in a Smarter Way')
+st. title('2. Using Prophet in a Smarter Way')
 st.markdown(
 '''
 Perhaps we could make predictions for a smaller window into the future and continuously retrain ...  
@@ -130,7 +133,7 @@ df['Percent Change'] = df['y'].pct_change()
 df.set_index('ds')[['y', 'yhat', 'yhat_lower', 'yhat_upper']].plot(figsize=(16,8), color=['royalblue', "#34495e", "#e74c3c", "#e74c3c"], grid=True)
 st.pyplot(plt)
 
-st.title('4. Trading Algorithms')
+st.title('3. Trading Algorithms')
 st.markdown('''Let us use this data to simulate how various trading strategies did over time with an initial investment of $1,000 dollars. 
 We create four initial trading algorithms:
 * **Hold**: Our bench mark.  This is a buy and hold strategy. Meaning we buy the stock and hold on to it until the end time period.
@@ -155,7 +158,7 @@ st.write(f"Seasonality = {df['Seasonality'].iloc[-1]*1000:,.0f}")
 
 st.write("How delightful that holding outperforms Prophet in both of our methods. Seasonality does better but this was based on some degree of future knowledge")
 
-st.title('5. Optimizing the Threshold')
+st.title('4. Optimizing the Threshold')
 ''' 
 In an attempt to improve how we use Prophet and beat our holding method, let's create an optimized threshold at each time point based on a rolling windows to incorporate changing thresholds over time.
 We will use rolling windows of 10, 20, ... 96 months and and threshold as a proportion from 0 to 0.99"

@@ -11,8 +11,10 @@ from plotly import graph_objs as go
 from collections import Counter
 import os
 import toml
+from pages.helper.utility import add_logo
+add_logo()
 
-st.set_page_config(layout='wide', initial_sidebar_state='expanded')
+# st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 readme = dict(toml.load('./documents/readme.toml'))
 
