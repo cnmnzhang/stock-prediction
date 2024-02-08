@@ -3,3 +3,4 @@ prophet
 yfinance 
 plotly
 scikit-learn
+xgboost
